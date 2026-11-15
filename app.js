@@ -16,13 +16,46 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
 
+  const norm = (s) =>
+    String(s ?? "")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[’‘ʻʼ]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/[—–−]/g, "-")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const matchesQuery = (blob, q) => {
+    if (!q) return true;
+    const hay = norm(blob);
+    const needle = norm(q);
+    if (!needle) return true;
+    if (hay.includes(needle)) return true;
+    // Multi-word: every token must appear (order-free)
+    const parts = needle.split(" ").filter(Boolean);
+    return parts.length > 1 && parts.every((p) => hay.includes(p));
+  };
+
+  const shortPattern = (name) =>
+    String(name || "")
+      .replace(/^\d+\.\s*/, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const debounce = (fn, ms) => {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), ms);
+    };
+  };
+
   /* —— How-to —— */
   const howtoEl = $("#howto-steps");
   howtoEl.innerHTML = data.howto.steps
-    .map(
-      (s) =>
-        `<li><h3>${esc(s.title)}</h3><p>${esc(s.body)}</p></li>`
-    )
+    .map((s) => `<li><h3>${esc(s.title)}</h3><p>${esc(s.body)}</p></li>`)
     .join("");
   $("#howto-note").textContent = data.howto.cue;
   const voice = data.voiceFilmPlayer;
@@ -42,7 +75,7 @@
     .filter(Boolean);
 
   const setActive = () => {
-    const y = window.scrollY + 70;
+    const y = window.scrollY + 90;
     let current = sections[0];
     for (const sec of sections) {
       if (sec.offsetTop <= y) current = sec;
@@ -54,98 +87,130 @@
   window.addEventListener("scroll", setActive, { passive: true });
   setActive();
 
-  /* —— Hooks —— */
-  const hookCat = $("#hook-cat");
+  /* —— Pattern picker —— */
+  const patternPick = $("#pattern-pick");
   data.hooks.forEach((c, i) => {
     const opt = document.createElement("option");
     opt.value = String(i);
-    opt.textContent = c.name;
-    hookCat.appendChild(opt);
+    opt.textContent = `${i + 1}. ${shortPattern(c.name)}`;
+    patternPick.appendChild(opt);
   });
 
-  const renderHooks = () => {
-    const q = ($("#hook-search").value || "").trim().toLowerCase();
-    const catIdx = hookCat.value;
-    const wrap = $("#hooks-list");
-    const cats =
-      catIdx === ""
-        ? data.hooks.map((c, i) => ({ ...c, _i: i }))
-        : [{ ...data.hooks[Number(catIdx)], _i: Number(catIdx) }];
+  const searchInput = $("#global-search");
+  const statusEl = $("#find-status");
+  let didAutoScroll = false;
 
-    let html = "";
-    let shown = 0;
-    for (const cat of cats) {
-      const items = cat.items
+  const renderHooksAndScripts = (opts = {}) => {
+    const q = (searchInput.value || "").trim();
+    const catIdx = patternPick.value;
+    const catFilter =
+      catIdx === ""
+        ? null
+        : Number(catIdx);
+
+    let hookShown = 0;
+    let scriptShown = 0;
+    let hooksHtml = "";
+    let scriptsHtml = "";
+
+    const cats =
+      catFilter == null
+        ? data.hooks.map((_, i) => i)
+        : [catFilter];
+
+    for (const i of cats) {
+      const hookCat = data.hooks[i];
+      const scriptCat = data.scripts[i];
+      if (!hookCat || !scriptCat) continue;
+
+      const groupName = hookCat.name;
+      const groupBlob = `${groupName} ${shortPattern(groupName)} ${hookCat.why || ""}`;
+
+      const hookItems = hookCat.items
         .map((text, n) => ({ text, n: n + 1 }))
-        .filter((it) => !q || it.text.toLowerCase().includes(q) || cat.name.toLowerCase().includes(q));
-      if (!items.length) continue;
-      html += `<div class="cat-label">${esc(cat.name)}</div>`;
-      if (cat.why) html += `<p class="cat-why">${esc(cat.why)}</p>`;
-      for (const it of items) {
-        html += `<div class="hook-line"><span class="num">${it.n}.</span>${esc(it.text)}</div>`;
-        shown++;
+        .filter((it) => matchesQuery(`${it.text} ${groupBlob}`, q));
+
+      const scripts = scriptCat.scripts.filter((s) =>
+        matchesQuery(`${s.title} ${s.text} ${groupBlob}`, q)
+      );
+
+      if (hookItems.length) {
+        hooksHtml += `<div class="cat-label" data-pattern="${i}">${esc(shortPattern(groupName))}</div>`;
+        if (hookCat.why) hooksHtml += `<p class="cat-why">${esc(hookCat.why)}</p>`;
+        for (const it of hookItems) {
+          hooksHtml += `<div class="hook-line"><span class="num">${it.n}.</span>${esc(it.text)}</div>`;
+          hookShown++;
+        }
       }
-    }
-    wrap.innerHTML = html || `<p class="empty">No hooks match.</p>`;
-  };
-  $("#hook-search").addEventListener("input", renderHooks);
-  hookCat.addEventListener("change", renderHooks);
-  renderHooks();
 
-  /* —— Scripts —— */
-  const scriptCat = $("#script-cat");
-  data.scripts.forEach((c, i) => {
-    const opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = c.name;
-    scriptCat.appendChild(opt);
-  });
-
-  const renderScripts = () => {
-    const q = ($("#script-search").value || "").trim().toLowerCase();
-    const catIdx = scriptCat.value;
-    const wrap = $("#scripts-list");
-    const cats =
-      catIdx === ""
-        ? data.scripts.map((c, i) => ({ ...c, _i: i }))
-        : [{ ...data.scripts[Number(catIdx)], _i: Number(catIdx) }];
-
-    let html = "";
-    let shown = 0;
-    for (const cat of cats) {
-      const scripts = cat.scripts.filter((s) => {
-        if (!q) return true;
-        const blob = `${s.title} ${s.text} ${cat.name}`.toLowerCase();
-        return blob.includes(q);
-      });
-      if (!scripts.length) continue;
-      html += `<div class="cat-label">${esc(cat.name)}</div>`;
-      for (const s of scripts) {
-        html += `<article class="item">
-          <div class="item-meta"><span>${esc(cat.name)} · #${s.n}</span>${
+      if (scripts.length) {
+        scriptsHtml += `<div class="cat-label" data-pattern="${i}">${esc(shortPattern(groupName))}</div>`;
+        for (const s of scripts) {
+          scriptsHtml += `<article class="item">
+          <div class="item-meta"><span>${esc(shortPattern(groupName))} · #${s.n}</span>${
             s.duration ? `<span class="dur">${esc(s.duration)}</span>` : ""
           }</div>
           <h3>${esc(s.title)}</h3>
           <p>${esc(s.text)}</p>
         </article>`;
-        shown++;
+          scriptShown++;
+        }
       }
     }
-    $("#script-count").textContent = `${shown} of ${data.scriptCount} scripts`;
-    wrap.innerHTML = html || `<p class="empty">No scripts match.</p>`;
+
+    $("#hooks-list").innerHTML =
+      hooksHtml || `<p class="empty">No hooks match “${esc(q) || "this filter"}”.</p>`;
+    $("#scripts-list").innerHTML =
+      scriptsHtml || `<p class="empty">No scripts match “${esc(q) || "this filter"}”.</p>`;
+
+    $("#hook-count").textContent = q || catFilter != null
+      ? `${hookShown} hook${hookShown === 1 ? "" : "s"} shown`
+      : `${data.hookCount} hooks · 12 patterns`;
+    $("#script-count").textContent = q || catFilter != null
+      ? `${scriptShown} of ${data.scriptCount} scripts`
+      : `${data.scriptCount} scripts · 12 patterns`;
+
+    if (q) {
+      statusEl.textContent = `${hookShown} hooks · ${scriptShown} scripts match “${q}”`;
+    } else if (catFilter != null) {
+      const name = shortPattern(data.hooks[catFilter].name);
+      statusEl.textContent = `Showing pattern ${catFilter + 1}: ${name}`;
+    } else {
+      statusEl.textContent = "Browse a pattern group, or type a topic to filter both lists.";
+    }
+
+    if (opts.scroll && (q || catFilter != null) && (hookShown > 0 || scriptShown > 0)) {
+      const target = hookShown > 0 ? $("#hooks") : $("#scripts");
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      didAutoScroll = true;
+    }
   };
-  $("#script-search").addEventListener("input", renderScripts);
-  scriptCat.addEventListener("change", renderScripts);
-  renderScripts();
+
+  const onSearchInput = debounce(() => {
+    renderHooksAndScripts({ scroll: true });
+  }, 180);
+
+  searchInput.addEventListener("input", onSearchInput);
+  searchInput.addEventListener("search", () => {
+    // Safari clear (x) fires search event
+    renderHooksAndScripts({ scroll: false });
+  });
+  patternPick.addEventListener("change", () => {
+    renderHooksAndScripts({ scroll: true });
+  });
+
+  renderHooksAndScripts();
 
   /* —— Cue sheet —— */
   const renderCue = () => {
-    const q = ($("#cue-search").value || "").trim().toLowerCase();
+    const q = ($("#cue-search").value || "").trim();
     const wrap = $("#cue-list");
     const reels = data.cue.reels.filter((r) => {
       if (!q) return true;
-      const blob = `${r.title} ${r.handle} ${r.listen} ${(r.say || []).join(" ")}`.toLowerCase();
-      return blob.includes(q);
+      return matchesQuery(
+        `${r.title} ${r.handle} ${r.listen} ${(r.say || []).join(" ")}`,
+        q
+      );
     });
     wrap.innerHTML =
       reels
@@ -169,17 +234,19 @@
         )
         .join("") || `<p class="empty">No cue reels match.</p>`;
   };
-  $("#cue-search").addEventListener("input", renderCue);
+  $("#cue-search").addEventListener(
+    "input",
+    debounce(renderCue, 180)
+  );
   renderCue();
 
   /* —— Transcripts —— */
   const renderTranscripts = () => {
-    const q = ($("#transcript-search").value || "").trim().toLowerCase();
+    const q = ($("#transcript-search").value || "").trim();
     const wrap = $("#transcripts-list");
     const items = data.transcripts.filter((t) => {
       if (!q) return true;
-      const blob = `${t.id} ${t.handle} ${t.uploader} ${t.text}`.toLowerCase();
-      return blob.includes(q);
+      return matchesQuery(`${t.id} ${t.handle} ${t.uploader} ${t.text}`, q);
     });
     wrap.innerHTML =
       items
@@ -198,6 +265,12 @@
         )
         .join("") || `<p class="empty">No transcripts match.</p>`;
   };
-  $("#transcript-search").addEventListener("input", renderTranscripts);
+  $("#transcript-search").addEventListener(
+    "input",
+    debounce(renderTranscripts, 180)
+  );
   renderTranscripts();
-}();
+
+  // Avoid unused lint in older tooling
+  void didAutoScroll;
+})();

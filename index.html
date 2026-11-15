@@ -20,8 +20,8 @@
     <h1 class="headline reveal delay-1">Film one reel.<br />Walk it clean.</h1>
     <p class="lede reveal delay-2">Hooks, 10–20s scripts, cue sheet, and transcripts — built for Daelum’s Osmo walk.</p>
     <div class="cta-row reveal delay-3">
-      <a class="cta" href="#scripts">Jump to scripts</a>
-      <a class="cta cta-ghost" href="#hooks">Open hooks</a>
+      <a class="cta" href="#find">Find a topic</a>
+      <a class="cta cta-ghost" href="#scripts">Jump to scripts</a>
     </div>
   </header>
 
@@ -32,6 +32,27 @@
     <a href="#cue">Cue sheet</a>
     <a href="#transcripts">Transcripts</a>
   </nav>
+
+  <div class="find-bar" id="find">
+    <div class="find-inner">
+      <p class="find-label">Find hooks &amp; scripts</p>
+      <input
+        type="search"
+        id="global-search"
+        placeholder="Type a topic — carbs, scale, bulk, walk, protein…"
+        autocomplete="off"
+        enterkeyhint="search"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <label class="sr-only" for="pattern-pick">Pattern group</label>
+      <select id="pattern-pick" aria-label="Browse by pattern group">
+        <option value="">All 12 pattern groups</option>
+      </select>
+      <p class="find-status" id="find-status" aria-live="polite"></p>
+    </div>
+  </div>
 
   <main>
     <section id="howto" class="section">
@@ -49,12 +70,7 @@
         <h2>Opening-line hooks</h2>
         <p>Pick <strong>one</strong> per reel. Say it first on camera, then paraphrase the body.</p>
       </div>
-      <div class="toolbar">
-        <input type="search" id="hook-search" placeholder="Search hooks…" autocomplete="off" enterkeyhint="search" />
-        <select id="hook-cat" aria-label="Hook category">
-          <option value="">All categories</option>
-        </select>
-      </div>
+      <p class="count" id="hook-count"></p>
       <div id="hooks-list" class="list"></div>
     </section>
 
@@ -62,12 +78,6 @@
       <div class="section-head">
         <h2>Film-ready scripts</h2>
         <p>10–20 seconds. Say as written — or keep the hook and paraphrase.</p>
-      </div>
-      <div class="toolbar">
-        <input type="search" id="script-search" placeholder="Search scripts…" autocomplete="off" enterkeyhint="search" />
-        <select id="script-cat" aria-label="Script category">
-          <option value="">All categories</option>
-        </select>
       </div>
       <p class="count" id="script-count"></p>
       <div id="scripts-list" class="list"></div>
