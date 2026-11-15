@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#06141a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Walk Film Kit — Daelum</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <header class="hero" id="top">
+    <p class="brand reveal">Walk Film Kit</p>
+    <h1 class="headline reveal delay-1">Film one reel.<br />Walk it clean.</h1>
+    <p class="lede reveal delay-2">Hooks, 10–20s scripts, cue sheet, and transcripts — built for Daelum’s Osmo walk.</p>
+    <div class="cta-row reveal delay-3">
+      <a class="cta" href="#find">Find a topic</a>
+      <a class="cta cta-ghost" href="#scripts">Jump to scripts</a>
+    </div>
+  </header>
+
+  <nav class="sticky-nav" id="nav" aria-label="Sections">
+    <a href="#howto">How-to</a>
+    <a href="#hooks">Hooks</a>
+    <a href="#scripts">Scripts</a>
+    <a href="#cue">Cue sheet</a>
+    <a href="#transcripts">Transcripts</a>
+  </nav>
+
+  <div class="find-bar" id="find">
+    <div class="find-inner">
+      <p class="find-label">Find hooks &amp; scripts</p>
+      <input
+        type="search"
+        id="global-search"
+        placeholder="Type a topic — carbs, scale, bulk, walk, protein…"
+        autocomplete="off"
+        enterkeyhint="search"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+      <label class="sr-only" for="pattern-pick">Pattern group</label>
+      <select id="pattern-pick" aria-label="Browse by pattern group">
+        <option value="">All 12 pattern groups</option>
+      </select>
+      <p class="find-status" id="find-status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <main>
+    <section id="howto" class="section">
+      <div class="section-head">
+        <h2>How to film</h2>
+        <p>One hook → one script → Osmo walk. One reel at a time.</p>
+      </div>
+      <ol class="howto-steps" id="howto-steps"></ol>
+      <p class="howto-note" id="howto-note"></p>
+      <p class="voice-link" id="voice-link" hidden></p>
+    </section>
+
+    <section id="hooks" class="section">
+      <div class="section-head">
+        <h2>Opening-line hooks</h2>
+        <p>Pick <strong>one</strong> per reel. Say it first on camera, then paraphrase the body.</p>
+      </div>
+      <p class="count" id="hook-count"></p>
+      <div id="hooks-list" class="list"></div>
+    </section>
+
+    <section id="scripts" class="section">
+      <div class="section-head">
+        <h2>Film-ready scripts</h2>
+        <p>10–20 seconds. Say as written — or keep the hook and paraphrase.</p>
+      </div>
+      <p class="count" id="script-count"></p>
+      <div id="scripts-list" class="list"></div>
+    </section>
+
+    <section id="cue" class="section">
+      <div class="section-head">
+        <h2>Walk-film cue sheet</h2>
+        <p>Listen → pause → say it in your words → next.</p>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="cue-search" placeholder="Search cue reels…" autocomplete="off" enterkeyhint="search" />
+      </div>
+      <div id="cue-list" class="list"></div>
+    </section>
+
+    <section id="transcripts" class="section">
+      <div class="section-head">
+        <h2>Instagram transcripts</h2>
+        <p>Combined batch — full spoken text for reference.</p>
+      </div>
+      <div class="toolbar">
+        <input type="search" id="transcript-search" placeholder="Search transcripts…" autocomplete="off" enterkeyhint="search" />
+      </div>
+      <div id="transcripts-list" class="list"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Walk Film Kit · Daelum Marx</p>
+    <a href="#top">Back to top</a>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
